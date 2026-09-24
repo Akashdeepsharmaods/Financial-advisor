@@ -59,13 +59,23 @@ export default function BookingSuite({ initialObjective }: BookingSuiteProps) {
     }
   }, [initialObjective]);
 
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsConfirmed(true);
+    setIsSubmitting(true);
 
     try {
+      // Post booking data to API Route
+      await fetch('/api/booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingState),
+      });
+
+      setIsConfirmed(true);
+
       const confettiModule = await import('canvas-confetti');
       const confetti = confettiModule.default;
       confetti({
@@ -75,7 +85,10 @@ export default function BookingSuite({ initialObjective }: BookingSuiteProps) {
         colors: ['#D4AF37', '#F3E5AB', '#10B981', '#FFFFFF', '#C5A059']
       });
     } catch (err) {
-      // ignore
+      console.error('Submission error:', err);
+      setIsConfirmed(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -476,11 +489,21 @@ export default function BookingSuite({ initialObjective }: BookingSuiteProps) {
                     <button
                       form="privateBookingForm"
                       type="submit"
-                      className="btn-gold px-5 sm:px-8 py-3 sm:py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-xl shadow-amber-500/20 cursor-pointer active:scale-95 transition-all"
+                      disabled={isSubmitting}
+                      className="btn-gold px-5 sm:px-8 py-3 sm:py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-xl shadow-amber-500/20 cursor-pointer active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <Check className="w-4 h-4" />
-                      <span className="hidden sm:inline">Confirm Private Strategy Session</span>
-                      <span className="sm:hidden">Confirm Strategy Session</span>
+                      {isSubmitting ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></span>
+                          <span>Securing Reservation...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span className="hidden sm:inline">Confirm Private Strategy Session</span>
+                          <span className="sm:hidden">Confirm Strategy Session</span>
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
